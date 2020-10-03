@@ -74,6 +74,10 @@ Gamepad.prototype._loadConfiguration = function () {
   }
 
   this._config = require(configPath);
+  let additionalFunctionsPath = configPath.replace(".json", ".js");
+  if (fs.existsSync(additionalFunctionsPath)) {
+    this._additionalFunctions = import(additionalFunctionsPath);
+  }
 
   // if the user specified a custom vendorID or productID, use that instead
   if (this._options.vendorID) {
@@ -158,9 +162,9 @@ Gamepad.prototype._detectControllerConfiguration = function () {
 _connectSerialNumber = function (options) {
   HID.devices.forEach((element) => {
     if (
-      element.vendorID == options.vendorID &&
-      element.productID == options.productID &&
-      element.serialNumber == options.serialNumber
+      element.vendorID === options.vendorID &&
+      element.productID === options.productID &&
+      element.serialNumber === options.serialNumber
     ) {
       return new HID.HID(element.path);
     }
@@ -180,6 +184,9 @@ Gamepad.prototype.connect = function () {
   this._loadConfiguration();
   if (this._options.serialNumber) {
     this._usb = _connectSerialNumber(this._options.serialNumber);
+    if (this._usb === undefined) {
+      return undefined;
+    }
   } else {
     this._usb = new HID.HID(this._config.vendorID, this._config.productID);
   }
@@ -321,3 +328,15 @@ Gamepad.prototype.disconnect = function () {
     this._usb.close();
   }
 };
+
+Gamepad.prototype.rumble = function (duration) {
+  if (this._additionalFunctions) {
+    if (isFunction(this._additionalFunctions.rumble)) {
+      this._additionalFunctions.rumble(this._usb);
+    }
+  }
+};
+
+function isFunction(possibleFunction) {
+  return typeof possibleFunction === typeof Function;
+}
