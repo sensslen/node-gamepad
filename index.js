@@ -333,8 +333,10 @@ Gamepad.prototype.rumble = function (duration) {
   if (this._additionalFunctions) {
     if (isFunction(this._additionalFunctions.rumble)) {
       this._additionalFunctions.rumble(this._usb);
+      return;
     }
   }
+  console.log("no rumble function");
 };
 
 function isFunction(possibleFunction) {
