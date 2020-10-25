@@ -339,9 +339,9 @@ Gamepad.prototype.rumble = function (duration) {
 
   if (this._additionalFunctions) {
     if (isFunction(this._additionalFunctions.rumble)) {
-      this._additionalFunctions.rumble(this._usb, 1, 1);
+      this._additionalFunctions.rumble(this._usb, true);
       this._rumbleTimeout = setTimeout(function () {
-        this._additionalFunctions.rumble(this._usb, 0, 0);
+        this._additionalFunctions.rumble(this._usb, false);
       }, duration);
       return;
     }
