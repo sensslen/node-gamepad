@@ -74,7 +74,10 @@ Gamepad.prototype._loadConfiguration = function () {
   }
 
   this._config = require(configPath);
-  let additionalFunctionsPath = configPath.replace(".json", ".js");
+  let additionalFunctionsPath = path.resolve(
+    __dirname,
+    "./controllers/" + this._type + ".js"
+  );
   if (fs.existsSync(additionalFunctionsPath)) {
     this._additionalFunctions = import(additionalFunctionsPath);
   }
@@ -330,9 +333,16 @@ Gamepad.prototype.disconnect = function () {
 };
 
 Gamepad.prototype.rumble = function (duration) {
+  if (this._rumbleTimeout) {
+    clearTimeout(this._rumbleTimeout);
+  }
+
   if (this._additionalFunctions) {
     if (isFunction(this._additionalFunctions.rumble)) {
-      this._additionalFunctions.rumble(this._usb);
+      this._additionalFunctions.rumble(this._usb, 1, 1);
+      this._rumbleTimeout = setTimeout(function () {
+        this._additionalFunctions.rumble(this._usb, 0, 0);
+      }, duration);
       return;
     }
   }
