@@ -1,6 +1,6 @@
 {
     "name": "@sensslen/node-gamepad",
-    "version": "0.2.0-beta3",
+    "version": "0.2.0-beta4",
     "description": "node-gamepad is a package for node that allows you to effortlessly interface your node applications with a variety of gamepad controllers. This is a port of node-gamepad library to typescript by also removing some of the restrictions implied by this library (namely allowing gamepads to be subcleassed and also improving usb interaction)",
     "homepage": "https://github.com/sensslen/node-gamepad",
     "bugs": {
@@ -18,16 +18,13 @@
     },
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "files": [
-        "dist",
-        "readme.md"
-    ],
     "scripts": {
-        "prebuild": "del-cli dist -f",
         "build": "tsc",
         "postbuild": "copyfiles -u 1 src/controllers/**/*.json dist/",
-        "postinstall": "sort-package-json",
-        "prepublishOnly": "sort-package-json && npm run build"
+        "prebuildpackage": "npm run clean && npm run build && sort-package-json && node dist/SetupPackage.js",
+        "buildpackage": "cd dist && npm pack",
+        "clean": "del-cli dist -f",
+        "postinstall": "sort-package-json"
     },
     "dependencies": {
         "node-hid": "^2.1.1",
