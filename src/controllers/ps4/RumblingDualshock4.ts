@@ -1,19 +1,21 @@
-import { NodeGamepad } from '../..';
+import { ILogger } from '../../ILogger';
+import { NodeGamepad } from '../../NodeGamepad';
 import * as config from './dualshock4.json';
 import { IConfig } from '../../IConfig';
 
-export class RumblingDualshock4 extends NodeGamepad {
-    private timeout?: any;
+export interface IRumblingDualshock4ConstructorParameters {
+    config?: IConfig;
+    logger?: ILogger;
+}
 
-    constructor(customConfig?: IConfig) {
-        if (customConfig) {
-            super(customConfig);
-        } else {
-            super(config);
-        }
+export class RumblingDualshock4 extends NodeGamepad {
+    private timeout?: ReturnType<typeof setTimeout>;
+
+    constructor(params: IRumblingDualshock4ConstructorParameters) {
+        super(params.config ? params.config : config, params.logger);
     }
 
-    public rumble(duration: number) {
+    public rumble(duration: number): void {
         if (this.timeout) {
             clearTimeout(this.timeout);
             this.timeout = undefined;
