@@ -3,7 +3,7 @@ import * as config from './dualshock4.json';
 import { IConfig } from '../../IConfig';
 
 export class RumblingDualshock4 extends NodeGamepad {
-    private timeout?: ReturnType<typeof setTimeout>;
+    private timeout?: any;
 
     constructor(customConfig?: IConfig) {
         if (customConfig) {
