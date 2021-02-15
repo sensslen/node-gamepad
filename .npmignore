@@ -2,3 +2,4 @@
 *.spec.*
 SetupPackage.*
 version.txt
+test.js

@@ -15,24 +15,29 @@ export class NodeGamepad extends EventEmitter {
         super();
     }
 
-    public start() {
+    public start(debug = false) {
         this.log(`Starting connection procedure to device:${JSON.stringify(this.toIDeviceSpec(this.config))}`);
+        process.on('exit', () => this.stop());
 
         startMonitoring();
         find(this.config.vendorID, this.config.productID)
             .then((devices) => {
                 for (let device of devices) {
-                    this.connectIfMatching(device);
+                    this.connectIfMatching(device, debug);
                 }
             })
             .catch((error) => this.log(`usb device find error:${JSON.stringify(error)}`));
 
-        on(`add:${this.config.vendorID}:${this.config.productID}`, (device) => this.connectIfMatching(device));
+        on(`add:${this.config.vendorID}:${this.config.productID}`, (device) => this.connectIfMatching(device, debug));
+        on(`remove:${this.config.vendorID}:${this.config.productID}`, (device) =>
+            this.log(`disconnect:${JSON.stringify(device)}`)
+        );
     }
 
     public stop() {
         if (this._usb) {
             this._usb.close();
+            this._usb = undefined;
         }
         stopMonitoring();
     }
@@ -41,18 +46,20 @@ export class NodeGamepad extends EventEmitter {
         // do nothing here intentionally. gamepads supporting rumbling do need to override this method
     }
 
-    private connect(device: Device): void {
+    private connect(device: Device, debug: boolean): void {
         if (this._usb) {
             return;
         }
         this.log(`Connecting to:${JSON.stringify(device)}`);
-        let devicesMatchingVidAndPid = devices(device.vendorId, device.productId);
-        let matchingDevices = devicesMatchingVidAndPid.filter((d) => d.serialNumber === device.serialNumber);
+        let matchingDevices = devices(device.vendorId, device.productId);
+        if (matchingDevices.length > 1) {
+            matchingDevices = matchingDevices.filter((d) => d.serialNumber === device.serialNumber);
+        }
         if (matchingDevices.length < 1 || !matchingDevices[0].path) {
             this.log('Failed to connect. Maybe the device is in use.');
         } else {
             this._usb = new HID(matchingDevices[0].path);
-            this._usb.on('data', (data: number[]) => this.onControllerFrame(data));
+            this._usb.on('data', (data: number[]) => this.onControllerFrame(data, debug));
             this._usb.on('error', (error) => {
                 this.log(`Error occurred:${JSON.stringify(error)}`);
                 this._usb?.close();
@@ -75,9 +82,9 @@ export class NodeGamepad extends EventEmitter {
         };
     }
 
-    private connectIfMatching(device: Device): void {
+    private connectIfMatching(device: Device, debug: boolean): void {
         if (this.deviceIsMatch(device)) {
-            this.connect(device);
+            this.connect(device, debug);
         }
     }
 
@@ -91,7 +98,11 @@ export class NodeGamepad extends EventEmitter {
         return match;
     }
 
-    private onControllerFrame(data: number[]): void {
+    private onControllerFrame(data: number[], debug: boolean): void {
+        if (debug) {
+            this.logger?.Log(JSON.stringify(data));
+        }
+
         this.processJoysticks(data);
         this.processButtons(data);
         this.processStatus(data);
