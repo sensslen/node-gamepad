@@ -1,6 +1,7 @@
 # node-gamepad
 
 > node-gamepad is a package for node that allows you to effortlessly interface your node applications with a variety of gamepad controllers.
+> Please note that XBOX 360 Controllers (and all of their derivatives) are known to behave bad. Thus this library does not support these kinds of Controllers.
 
 ## Installation
 
