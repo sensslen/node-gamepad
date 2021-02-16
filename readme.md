@@ -23,7 +23,8 @@ npm install @sensslen/node-gamepad
 
 ## How to Use
 
-Plug in a supported controller and run a variation of the code below (with an actual supported controller):
+Plug in a supported controller and run a variation of the code below (with an actual supported controller).
+Slternatively you can also run the code below and then plug in a supported controller.
 
 ### Code Example
 
@@ -33,7 +34,14 @@ import * as f310 from 'node-gamepad/controllers/logitech/gamepadf310';
 
 let gamepad = new NodeGamepad(f310);
 
-gamepad.connect();
+gamepad.start();
+
+gamepad.on('connected', function () {
+    console.log('connected');
+});
+gamepad.on('disconnected', function () {
+    console.log('disconnected');
+});
 
 gamepad.on('up:press', function () {
     console.log('up');
@@ -41,6 +49,9 @@ gamepad.on('up:press', function () {
 gamepad.on('down:press', function () {
     console.log('down');
 });
+
+// dont forget to stop when you are finished: gamepad.stop()
+// the gamepad class also registers for app termination just in case
 ```
 
 ## Supported Events
@@ -58,7 +69,7 @@ This package supports up to 3 different types of components: joysticks, buttons 
 
 ### Statuses
 
-A status value is read from a pin on the hardware and then can be mapped to a "state" (based on the dictionary file). See [this example](https://github.com/carldanley/node-gamepad/blob/master/controllers/ps3/dualshock3.json#L136) for more information.
+A status value is read from a pin on the hardware and then can be mapped to a "state" (based on the dictionary file). See [this example](https://github.com/sensslen/node-gamepad/blob/master/controllers/ps3/dualshock3.json#L136) for more information.
 
 1. `{name}:change`
 
