@@ -5,6 +5,7 @@ import { IConfig } from './IConfig';
 import { IDeviceSpec } from './IDeviceSpec';
 import { ILogger } from './ILogger';
 import { JoyStickValue } from './JoyStickValue';
+import { evaluate } from 'mathjs';
 
 export class NodeGamepad extends EventEmitter {
     private static _usbMonitoringCounter = 0;
@@ -12,7 +13,8 @@ export class NodeGamepad extends EventEmitter {
     protected _usb?: HID;
     private _stopped = false;
     private _joystickStates: { [key: string]: JoyStickValue } = {};
-    private _buttonStates: { [key: string]: number } = {};
+    private _buttonStates: { [key: string]: boolean } = {};
+    private _statusStates: { [key: string]: number } = {};
     private _connectRetryTimeout?: ReturnType<typeof setTimeout>;
 
     constructor(private config: IConfig, private logger?: ILogger) {
@@ -103,7 +105,9 @@ export class NodeGamepad extends EventEmitter {
         this.log(`Device connected:${JSON.stringify(device)}`);
         let matchingDevices = devices(device.vendorId, device.productId);
         this.logDebug(`Found devices:${JSON.stringify(matchingDevices)}`, debug);
-        matchingDevices = matchingDevices.filter((d) => d.serialNumber == device.serialNumber);
+        if (device.serialNumber) {
+            matchingDevices = matchingDevices.filter((d) => d.serialNumber == device.serialNumber);
+        }
         if (matchingDevices.length < 1 || !matchingDevices[0].path) {
             this.log('Failed to connect. Checking again in 100 ms.');
             this._connectRetryTimeout = setTimeout(() => this.connect(device, debug), 100);
@@ -166,7 +170,7 @@ export class NodeGamepad extends EventEmitter {
                 x: data[joystick.x.pin],
                 y: data[joystick.y.pin],
             };
-            if (oldState && (oldState.x !== newState.x || oldState.y !== newState.y)) {
+            if (oldState != undefined && (oldState.x !== newState.x || oldState.y !== newState.y)) {
                 this.emit(joystick.name + ':move', oldState);
             }
             this._joystickStates[joystick.name] = newState;
@@ -176,17 +180,13 @@ export class NodeGamepad extends EventEmitter {
     private processButtons(data: number[]) {
         this.config.buttons?.forEach((button) => {
             const oldState = this._buttonStates[button.name];
-            const newState = data[button.pin] & 0xff;
-            const isPressed = newState >= button.value;
-            if (oldState) {
+            const newState: boolean = evaluate(button.value, { value: data[button.pin] });
+            if (oldState != undefined) {
                 if (oldState !== newState) {
-                    this.emit(button.name + ':change', oldState);
-                    const oldPressed = oldState >= button.value;
-                    if (oldPressed != isPressed) {
-                        isPressed ? this.emit(button.name + ':press') : this.emit(button.name + ':release');
-                    }
+                    const emitEvent = newState ? `${button.name}:press` : `${button.name}:release`;
+                    this.emit(emitEvent);
                 }
-            } else if (isPressed) {
+            } else if (newState) {
                 this.emit(button.name + ':press');
             }
             this._buttonStates[button.name] = newState;
@@ -195,12 +195,12 @@ export class NodeGamepad extends EventEmitter {
 
     private processStatus(data: number[]) {
         this.config.status?.forEach((status) => {
-            const oldState = this._buttonStates[status.name];
+            const oldState = this._statusStates[status.name];
             const newState = data[status.pin] & 0xff;
             if (!oldState || oldState != newState) {
                 this.emit(status.name + ':change', this.getStateName(status.states, newState));
             }
-            this._buttonStates[status.name] = newState;
+            this._statusStates[status.name] = newState;
         });
     }
 
