@@ -3,12 +3,24 @@ import fs from 'fs';
 import simpleGit, { SimpleGit } from 'simple-git';
 const git: SimpleGit = simpleGit();
 
+const semver = require('semver');
+
 // DO NOT DELETE THIS FILE
 // This file is used by build system to build a clean npm package with the compiled js files in the root of the package.
 // It will not be included in the npm package.
 
 async function calculateVersionNumber() {
-    return await git.raw('describe', '--tags', '--dirty', '--always');
+    const gitDescribeVersion = await git.raw('describe', '--tags', '--dirty', '--always');
+    const split = gitDescribeVersion.split('-');
+    if (split.length == 1) {
+        return split[1];
+    }
+
+    const betaCount = Number(split[1]);
+    if (betaCount == undefined) {
+        throw new Error(`Cannot convert '${split[1]}' to a number`);
+    }
+    return `${semver.inc(split[0])}-beta.${betaCount}`;
 }
 
 async function main() {
