@@ -20,7 +20,7 @@ async function calculateVersionNumber() {
     if (betaCount == undefined) {
         throw new Error(`Cannot convert '${split[1]}' to a number`);
     }
-    return `${semver.inc(split[0])}-beta.${betaCount}`;
+    return `${semver.inc(split[0], 'patch')}-beta.${betaCount}`;
 }
 
 async function main() {
