@@ -17,14 +17,10 @@ jobs:
               with:
                   node-version: '14'
             - run: npm install
-            - run: npm run buildpackage
+            - run: npm run preparepublish
             - name: Publish prerelease
-              uses: pascalgn/npm-publish-action@1.3.6
+              uses: JS-DevTools/npm-publish@v1
               with:
-                  create_tag: 'false'
-                  workspace: '.'
-                  publish_command: 'npm'
-                  publish_args: '--tag next dist/*.tgz'
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+                  token: ${{ secrets.NPM_AUTH_TOKEN }}
+                  package: dist/package.json
+                  tag: next
