@@ -1,0 +1,28 @@
+name: npm-publish
+on:
+    push:
+        branches:
+            - master
+            - develop
+jobs:
+    npm-publish:
+        name: npm-publish
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+            - uses: actions/setup-node@v2
+              with:
+                  node-version: '14'
+            - run: npm install
+            - run: npm run buildpackage
+            - name: Publish prerelease
+              uses: pascalgn/npm-publish-action@1.3.6
+              with:
+                  create_tag: 'false'
+                  workspace: '.'
+                  publish_command: 'npm'
+                  publish_args: '--tag next dist/*.tgz'
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
