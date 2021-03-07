@@ -21,8 +21,8 @@
     "scripts": {
         "build": "tsc",
         "postbuild": "copyfiles -u 1 src/controllers/**/*.json dist/",
-        "prepreparepublish": "npm run clean && npm run build && sort-package-json",
-        "preparepublish": "node dist/SetupPackage.js",
+        "presetuppublish": "npm run clean && npm run build && sort-package-json",
+        "setuppublish": "node dist/SetupPackage.js",
         "clean": "del-cli dist -f",
         "postinstall": "sort-package-json",
         "prerun": "sort-package-json && npm run build",
