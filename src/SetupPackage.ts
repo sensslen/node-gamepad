@@ -12,6 +12,8 @@ async function calculateVersionNumber() {
 }
 
 async function main() {
+    console.log('preparing build by cleaning package.json');
+
     const source = fs.readFileSync(__dirname + '/../package.json').toString('utf-8');
     const sourceObj = JSON.parse(source);
     sourceObj.scripts = {};
@@ -23,7 +25,9 @@ async function main() {
         sourceObj.types = sourceObj.types.slice(5);
     }
 
-    sourceObj.version = (await calculateVersionNumber()).trim();
+    let version = (await calculateVersionNumber()).trim();
+    console.log(`setting version number:${version}`);
+    sourceObj.version = version;
 
     fs.writeFileSync(__dirname + '/package.json', Buffer.from(JSON.stringify(sourceObj, null, 2), 'utf-8'));
 
