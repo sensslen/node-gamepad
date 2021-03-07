@@ -1,41 +1,49 @@
 {
-  "name": "node-gamepad",
-  "description": "node-gamepad is a package for node that allows you to effortlessly interface your node applications with a variety of gamepad controllers.",
-  "version": "0.2.0",
-  "homepage": "https://github.com/carldanley/node-gamepad",
-  "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:carldanley/node-gamepad.git"
-  },
-  "author": {
-    "name": "Carl Danley",
-    "url": "https://github.com/carldanley/node-gamepad"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/carldanley/node-gamepad/issues"
-  },
-  "engines": {
-    "node": ">= 0.10.28"
-  },
-  "dependencies": {
-    "colors": "^1.4.0",
-    "node-hid": "^1.3.1"
-  },
-  "files": [
-    "controllers",
-    "index.js",
-    "readme.md"
-  ],
-  "contributors": [
-    {
-      "name": "Luke Karrys",
-      "email": "luke@lukekarrys.com"
+    "name": "@sensslen/node-gamepad",
+    "version": "0.2.0",
+    "description": "node-gamepad is a package for node that allows you to effortlessly interface your node applications with a variety of gamepad controllers. This is a port of node-gamepad library to typescript by also removing some of the restrictions implied by this library (namely allowing gamepads to be subcleassed and also improving usb interaction)",
+    "homepage": "https://github.com/sensslen/node-gamepad",
+    "bugs": {
+        "url": "https://github.com/sensslen/node-gamepad/issues"
     },
-    {
-      "name": "Simon Ensslen",
-      "email": "sensslen@gmail.com"
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:carldanley/node-gamepad.git"
+    },
+    "license": "MIT",
+    "author": {
+        "name": "Simon Ensslen",
+        "email": "sensslen@gmail.com",
+        "url": "https://github.com/sensslen/node-gamepad"
+    },
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "postbuild": "copyfiles -u 1 src/controllers/**/*.json dist/",
+        "prebuildpackage": "npm run clean && npm run build && sort-package-json && node dist/SetupPackage.js",
+        "buildpackage": "cd dist && npm pack",
+        "clean": "del-cli dist -f",
+        "postinstall": "sort-package-json",
+        "prerun": "sort-package-json && npm run build",
+        "run": "node dist/test.js"
+    },
+    "dependencies": {
+        "mathjs": "^9.2.0",
+        "node-hid": "^2.1.1",
+        "usb-detection": "^4.10.0"
+    },
+    "devDependencies": {
+        "@types/mathjs": "^6.0.11",
+        "@types/node-hid": "^1.3.0",
+        "@types/ts-nameof": "^4.2.1",
+        "copyfiles": "^2.4.1",
+        "del-cli": "^3.0.1",
+        "sort-package-json": "^1.48.0",
+        "ts-nameof": "^5.0.0",
+        "typescript": "^4.1.4"
+    },
+    "engines": {
+        "node": ">= 0.10.28"
     }
-  ]
 }

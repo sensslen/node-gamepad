@@ -1,0 +1,106 @@
+{
+    "vendorID": 1133,
+    "productID": 49689,
+    "joysticks": [
+        {
+            "name": "left",
+            "x": {
+                "pin": 1
+            },
+            "y": {
+                "pin": 2
+            }
+        },
+        {
+            "name": "right",
+            "x": {
+                "pin": 3
+            },
+            "y": {
+                "pin": 4
+            }
+        }
+    ],
+    "buttons": [
+        {
+            "value": "(value & 64) > 0",
+            "pin": 6,
+            "name": "leftJoystick"
+        },
+        {
+            "value": "(value & 128) > 0",
+            "pin": 6,
+            "name": "rightJoystick"
+        },
+        {
+            "value": "(value & 16) > 0",
+            "pin": 6,
+            "name": "back"
+        },
+        {
+            "value": "(value & 32) > 0",
+            "pin": 6,
+            "name": "start"
+        },
+        {
+            "value": "((value & 15) >= 5) and ((value & 15) <= 7)",
+            "pin": 5,
+            "name": "dpadLeft"
+        },
+        {
+            "value": "((value & 15) <= 1) or ((value & 15) == 7)",
+            "pin": 5,
+            "name": "dpadUp"
+        },
+        {
+            "value": "((value & 15) >= 1) and ((value & 15) <= 3)",
+            "pin": 5,
+            "name": "dpadRight"
+        },
+        {
+            "value": "((value & 15) >= 3) and ((value & 15) <= 5)",
+            "pin": 5,
+            "name": "dpadDown"
+        },
+        {
+            "value": "(value & 16) > 0",
+            "pin": 5,
+            "name": "X"
+        },
+        {
+            "value": "(value & 128) > 0",
+            "pin": 5,
+            "name": "Y"
+        },
+        {
+            "value": "(value & 32) > 0",
+            "pin": 5,
+            "name": "A"
+        },
+        {
+            "value": "(value & 64) > 0",
+            "pin": 5,
+            "name": "B"
+        },
+        {
+            "value": "(value & 1) > 0",
+            "pin": 6,
+            "name": "LB"
+        },
+        {
+            "value": "(value & 2) > 0",
+            "pin": 6,
+            "name": "RB"
+        },
+        {
+            "value": "(value & 4) > 0",
+            "pin": 6,
+            "name": "LT"
+        },
+        {
+            "value": "(value & 8) > 0",
+            "pin": 6,
+            "name": "RT"
+        }
+    ]
+}
