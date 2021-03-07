@@ -39,9 +39,9 @@
         "@types/ts-nameof": "^4.2.1",
         "copyfiles": "^2.4.1",
         "del-cli": "^3.0.1",
-        "sort-package-json": "^1.48.0",
-        "ts-nameof": "^5.0.0",
-        "typescript": "^4.1.4"
+        "simple-git": "^2.36.1",
+        "sort-package-json": "^1.49.0",
+        "typescript": "^4.2.3"
     },
     "engines": {
         "node": ">= 0.10.28"
