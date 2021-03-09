@@ -15,6 +15,7 @@ export class NodeGamepad extends EventEmitter {
     private _joystickStates: { [key: string]: JoyStickValue } = {};
     private _buttonStates: { [key: string]: boolean } = {};
     private _statusStates: { [key: string]: number } = {};
+    private _scaleStates: { [key: string]: number } = {};
     private _connectRetryTimeout?: ReturnType<typeof setTimeout>;
 
     constructor(private config: IConfig, private logger?: ILogger) {
@@ -161,6 +162,7 @@ export class NodeGamepad extends EventEmitter {
         this.processJoysticks(data);
         this.processButtons(data);
         this.processStatus(data);
+        this.processScales(data);
     }
 
     private processJoysticks(data: number[]) {
@@ -170,7 +172,7 @@ export class NodeGamepad extends EventEmitter {
                 x: data[joystick.x.pin],
                 y: data[joystick.y.pin],
             };
-            if (oldState != undefined && (oldState.x !== newState.x || oldState.y !== newState.y)) {
+            if (oldState == undefined || oldState.x !== newState.x || oldState.y !== newState.y) {
                 this.emit(joystick.name + ':move', oldState);
             }
             this._joystickStates[joystick.name] = newState;
@@ -181,23 +183,35 @@ export class NodeGamepad extends EventEmitter {
         this.config.buttons?.forEach((button) => {
             const oldState = this._buttonStates[button.name];
             const newState: boolean = evaluate(button.value, { value: data[button.pin] });
-            if (oldState != undefined) {
-                if (oldState !== newState) {
-                    const emitEvent = newState ? `${button.name}:press` : `${button.name}:release`;
-                    this.emit(emitEvent);
+            if (oldState == undefined) {
+                if (newState) {
+                    this.emit(button.name + ':press');
                 }
-            } else if (newState) {
-                this.emit(button.name + ':press');
+            } else if (oldState !== newState) {
+                const emitEvent = newState ? `${button.name}:press` : `${button.name}:release`;
+                this.emit(emitEvent);
             }
+
             this._buttonStates[button.name] = newState;
+        });
+    }
+
+    private processScales(data: number[]) {
+        this.config.scale?.forEach((scale) => {
+            const oldState = this._scaleStates[scale.name];
+            const newState = data[scale.pin];
+            if (oldState !== newState) {
+                this.emit(scale.name + ':change', newState);
+            }
+            this._scaleStates[scale.name] = newState;
         });
     }
 
     private processStatus(data: number[]) {
         this.config.status?.forEach((status) => {
             const oldState = this._statusStates[status.name];
-            const newState = data[status.pin] & 0xff;
-            if (!oldState || oldState != newState) {
+            const newState = data[status.pin];
+            if (oldState !== newState) {
                 this.emit(status.name + ':change', this.getStateName(status.states, newState));
             }
             this._statusStates[status.name] = newState;

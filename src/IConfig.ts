@@ -8,4 +8,5 @@ export interface IConfig extends IDeviceSpec {
         pin: number;
         states: { value: number; state: string }[];
     }[];
+    scale?: { pin: number; name: string }[];
 }
