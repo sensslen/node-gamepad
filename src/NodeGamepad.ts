@@ -50,9 +50,12 @@ export class NodeGamepad extends EventEmitter {
     }
 
     public stop() {
-        this.stopMonitoring();
-        this.stopConnectionRetry();
-        this.disconnect();
+        if (!this._stopped) {
+            this.stopMonitoring();
+            this.stopConnectionRetry();
+            this.disconnect();
+            this._stopped = true;
+        }
     }
 
     public rumble(_duration: number): void {
@@ -60,7 +63,6 @@ export class NodeGamepad extends EventEmitter {
     }
 
     private stopMonitoring() {
-        this._stopped = true;
         NodeGamepad._usbMonitoringCounter--;
         if (NodeGamepad._usbMonitoringCounter === 0) {
             stopMonitoring();
@@ -71,7 +73,6 @@ export class NodeGamepad extends EventEmitter {
         if (NodeGamepad._usbMonitoringCounter === 0) {
             startMonitoring();
         }
-        this._stopped = false;
         NodeGamepad._usbMonitoringCounter++;
     }
 
@@ -97,6 +98,7 @@ export class NodeGamepad extends EventEmitter {
     private registerStopProgramStopEvent() {
         process.on('SIGINT', () => this.stop());
         process.on('exit', () => this.stop());
+        process.on('uncaughtException', () => this.stop());
     }
 
     private connect(device: Device, debug: boolean): void {
@@ -115,6 +117,7 @@ export class NodeGamepad extends EventEmitter {
         } else {
             this.logDebug(`connecting to:${JSON.stringify(deviceToConnect)}`, debug);
             this._usb = new HID(deviceToConnect.path);
+            this.logDebug(`connected`, debug);
             this.emit('connected');
             this._connectRetryTimeout = undefined;
             this._usb.on('data', (data: number[]) => this.onControllerFrame(data, debug));
