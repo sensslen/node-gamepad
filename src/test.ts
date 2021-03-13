@@ -8,9 +8,6 @@ let logger: ILogger = {
     Debug(toLog: string) {
         console.log(toLog);
     },
-    DebugLowLevel(toLog: string) {
-        console.log(toLog);
-    },
 };
 
 let gamepad = new NodeGamepad(config, logger);
