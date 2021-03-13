@@ -1,3 +1,5 @@
 export interface ILogger {
-  Log(toLog: string): void;
+    Info(toLog: string): void;
+    Debug?: (toLog: string) => void;
+    DebugLowLevel?: (toLog: string) => void;
 }

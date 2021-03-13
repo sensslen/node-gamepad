@@ -22,7 +22,7 @@ export class NodeGamepad extends EventEmitter {
         super();
     }
 
-    public start(debug = false) {
+    public start() {
         this.log(`Starting connection procedure to device:${JSON.stringify(this.toIDeviceSpec(this.config))}`);
         this.registerStopProgramStopEvent();
 
@@ -30,14 +30,14 @@ export class NodeGamepad extends EventEmitter {
         find(this.config.vendorID, this.config.productID)
             .then((devices) => {
                 for (let device of devices) {
-                    this.connectIfMatching(device, debug);
+                    this.connectIfMatching(device);
                 }
             })
             .catch((error) => this.log(`usb device find error:${JSON.stringify(error)}`));
 
         on(`add:${this.config.vendorID}:${this.config.productID}`, (device) => {
             if (!this._stopped) {
-                this.connectIfMatching(device, debug);
+                this.connectIfMatching(device);
             }
         });
         on(`remove:${this.config.vendorID}:${this.config.productID}`, (device) => {
@@ -76,15 +76,21 @@ export class NodeGamepad extends EventEmitter {
         NodeGamepad._usbMonitoringCounter++;
     }
 
-    private logDebug(toLog: string, debug: boolean) {
-        if (debug) {
-            this.log(toLog);
+    private logDebug(toLog: string) {
+        if (this.logger?.Debug) {
+            this.logger.Debug(`NodeGamepad (Debug):${toLog}`);
+        }
+    }
+
+    private logDebugLowLevel(toLog: string) {
+        if (this.logger?.DebugLowLevel) {
+            this.logger.DebugLowLevel(`NodeGamepad (Debug low level):${toLog}`);
         }
     }
 
     private log(toLog: string) {
         if (this.logger) {
-            this.logger.Log(`NodeGamepad:${toLog}`);
+            this.logger.Info(`NodeGamepad:${toLog}`);
         }
     }
 
@@ -101,26 +107,26 @@ export class NodeGamepad extends EventEmitter {
         process.on('uncaughtException', () => this.stop());
     }
 
-    private connect(device: Device, debug: boolean): void {
+    private connect(device: Device): void {
         if (this._usb) {
             return;
         }
         this.log(`Device connected:${JSON.stringify(device)}`);
         const matchingDevices = devices(device.vendorId, device.productId);
-        this.logDebug(`Found devices:${JSON.stringify(matchingDevices)}`, debug);
+        this.logDebug(`Found devices:${JSON.stringify(matchingDevices)}`);
         const deviceToConnect = matchingDevices.find((d) => {
             return device.serialNumber === undefined || device.serialNumber === d.serialNumber;
         });
         if (deviceToConnect?.path === undefined) {
             this.log('Failed to connect. Checking again in 100 ms.');
-            this._connectRetryTimeout = setTimeout(() => this.connect(device, debug), 100);
+            this._connectRetryTimeout = setTimeout(() => this.connect(device), 100);
         } else {
-            this.logDebug(`connecting to:${JSON.stringify(deviceToConnect)}`, debug);
+            this.logDebug(`connecting to:${JSON.stringify(deviceToConnect)}`);
             this._usb = new HID(deviceToConnect.path);
-            this.logDebug(`connected`, debug);
+            this.logDebug(`connected`);
             this.emit('connected');
             this._connectRetryTimeout = undefined;
-            this._usb.on('data', (data: number[]) => this.onControllerFrame(data, debug));
+            this._usb.on('data', (data: number[]) => this.onControllerFrame(data));
             this._usb.on('error', (error) => {
                 this.log(`Error occurred:${JSON.stringify(error)}`);
                 this.disconnect();
@@ -144,9 +150,9 @@ export class NodeGamepad extends EventEmitter {
         };
     }
 
-    private connectIfMatching(device: Device, debug: boolean): void {
+    private connectIfMatching(device: Device): void {
         if (this.deviceIsMatch(device)) {
-            this.connect(device, debug);
+            this.connect(device);
         }
     }
 
@@ -160,8 +166,8 @@ export class NodeGamepad extends EventEmitter {
         return match;
     }
 
-    private onControllerFrame(data: number[], debug: boolean): void {
-        this.logDebug(JSON.stringify(data), debug);
+    private onControllerFrame(data: number[]): void {
+        this.logDebug(JSON.stringify(data));
 
         this.processJoysticks(data);
         this.processButtons(data);
@@ -171,6 +177,7 @@ export class NodeGamepad extends EventEmitter {
 
     private processJoysticks(data: number[]) {
         this.config.joysticks?.forEach((joystick) => {
+            this.logDebugLowLevel(`Processing joystick:${JSON.stringify(joystick)}`);
             const oldState = this._joystickStates[joystick.name];
             const newState = {
                 x: data[joystick.x.pin],
