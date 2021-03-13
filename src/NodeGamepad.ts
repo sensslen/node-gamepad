@@ -82,12 +82,6 @@ export class NodeGamepad extends EventEmitter {
         }
     }
 
-    private logDebugLowLevel(toLog: string) {
-        if (this.logger?.DebugLowLevel) {
-            this.logger.DebugLowLevel(`NodeGamepad (Debug low level):${toLog}`);
-        }
-    }
-
     private log(toLog: string) {
         if (this.logger) {
             this.logger.Info(`NodeGamepad:${toLog}`);
@@ -177,14 +171,13 @@ export class NodeGamepad extends EventEmitter {
 
     private processJoysticks(data: number[]) {
         this.config.joysticks?.forEach((joystick) => {
-            this.logDebugLowLevel(`Processing joystick:${JSON.stringify(joystick)}`);
             const oldState = this._joystickStates[joystick.name];
             const newState = {
                 x: data[joystick.x.pin],
                 y: data[joystick.y.pin],
             };
-            if (oldState == undefined || oldState.x !== newState.x || oldState.y !== newState.y) {
-                this.emit(joystick.name + ':move', oldState);
+            if (oldState === undefined || oldState.x !== newState.x || oldState.y !== newState.y) {
+                this.emit(joystick.name + ':move', newState);
             }
             this._joystickStates[joystick.name] = newState;
         });
