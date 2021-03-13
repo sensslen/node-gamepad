@@ -104,18 +104,19 @@ export class NodeGamepad extends EventEmitter {
             return;
         }
         this.log(`Device connected:${JSON.stringify(device)}`);
-        let matchingDevices = devices(device.vendorId, device.productId);
+        const matchingDevices = devices(device.vendorId, device.productId);
         this.logDebug(`Found devices:${JSON.stringify(matchingDevices)}`, debug);
-        if (device.serialNumber) {
-            matchingDevices = matchingDevices.filter((d) => d.serialNumber == device.serialNumber);
-        }
-        if (matchingDevices.length < 1 || !matchingDevices[0].path) {
+        const deviceToConnect = matchingDevices.find((d) => {
+            return device.serialNumber === undefined || device.serialNumber === d.serialNumber;
+        });
+        if (deviceToConnect?.path === undefined) {
             this.log('Failed to connect. Checking again in 100 ms.');
             this._connectRetryTimeout = setTimeout(() => this.connect(device, debug), 100);
         } else {
+            this.logDebug(`connecting to:${JSON.stringify(deviceToConnect)}`, debug);
+            this._usb = new HID(deviceToConnect.path);
             this.emit('connected');
             this._connectRetryTimeout = undefined;
-            this._usb = new HID(matchingDevices[0].path);
             this._usb.on('data', (data: number[]) => this.onControllerFrame(data, debug));
             this._usb.on('error', (error) => {
                 this.log(`Error occurred:${JSON.stringify(error)}`);

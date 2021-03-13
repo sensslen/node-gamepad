@@ -25,8 +25,8 @@
         "setuppublish": "node dist/SetupPackage.js",
         "clean": "del-cli dist -f",
         "postinstall": "sort-package-json",
-        "prerun": "sort-package-json && npm run build",
-        "run": "node dist/test.js"
+        "pretest": "sort-package-json && npm run build",
+        "test": "node dist/test.js"
     },
     "dependencies": {
         "mathjs": "^9.2.0",

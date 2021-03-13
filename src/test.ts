@@ -8,7 +8,7 @@ let logger: ILogger = {
 };
 
 let gamepad = new NodeGamepad(config, logger);
-gamepad.start();
+gamepad.start(true);
 
 gamepad.on('dpadUp:press', () => console.log(`dpadUp:true`));
 gamepad.on('dpadUp:release', () => console.log(`dpadUp:false`));
