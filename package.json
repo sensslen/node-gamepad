@@ -39,8 +39,8 @@
         "@types/ts-nameof": "^4.2.1",
         "copyfiles": "^2.4.1",
         "del-cli": "^3.0.1",
-        "semver": "^7.3.4",
-        "simple-git": "^2.36.2",
+        "semver": "^7.3.5",
+        "simple-git": "^2.37.0",
         "sort-package-json": "^1.49.0",
         "typescript": "^4.2.3"
     },
