@@ -30,8 +30,7 @@
     },
     "dependencies": {
         "mathjs": "^9.3.0",
-        "node-hid": "^2.1.1",
-        "usb-detection": "^4.10.0"
+        "node-hid": "^2.1.1"
     },
     "devDependencies": {
         "@types/mathjs": "^6.0.11",

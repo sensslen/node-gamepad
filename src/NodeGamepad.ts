@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import { devices, HID } from 'node-hid';
-import { startMonitoring, on, Device, stopMonitoring, find } from 'usb-detection';
 import { IConfig } from './IConfig';
 import { IDeviceSpec } from './IDeviceSpec';
 import { ILogger } from './ILogger';
@@ -8,8 +7,6 @@ import { JoyStickValue } from './JoyStickValue';
 import { evaluate } from 'mathjs';
 
 export class NodeGamepad extends EventEmitter {
-    private static _usbMonitoringCounter = 0;
-
     protected _usb?: HID;
     private _stopped = false;
     private _joystickStates: { [key: string]: JoyStickValue } = {};
@@ -17,6 +14,7 @@ export class NodeGamepad extends EventEmitter {
     private _statusStates: { [key: string]: number } = {};
     private _scaleStates: { [key: string]: number } = {};
     private _connectRetryTimeout?: ReturnType<typeof setTimeout>;
+    private readonly _connectionRetryTimeoutInMs = 100;
 
     constructor(private config: IConfig, private logger?: ILogger) {
         super();
@@ -25,34 +23,12 @@ export class NodeGamepad extends EventEmitter {
     public start() {
         this.log(`Starting connection procedure to device:${JSON.stringify(this.toIDeviceSpec(this.config))}`);
         this.registerStopProgramStopEvent();
-
-        this.startMonitoring();
-        find(this.config.vendorID, this.config.productID)
-            .then((devices) => {
-                for (let device of devices) {
-                    this.connectIfMatching(device);
-                }
-            })
-            .catch((error) => this.log(`usb device find error:${JSON.stringify(error)}`));
-
-        on(`add:${this.config.vendorID}:${this.config.productID}`, (device) => {
-            if (!this._stopped) {
-                this.connectIfMatching(device);
-            }
-        });
-        on(`remove:${this.config.vendorID}:${this.config.productID}`, (device) => {
-            if (!this._stopped) {
-                if (this.deviceIsMatch(device)) {
-                    this.stopConnectionRetry();
-                }
-            }
-        });
+        this.connect();
     }
 
     public stop() {
         if (!this._stopped) {
-            this.stopMonitoring();
-            this.stopConnectionRetry();
+            this.stopConnectionOProcess();
             this.disconnect();
             this._stopped = true;
         }
@@ -60,20 +36,6 @@ export class NodeGamepad extends EventEmitter {
 
     public rumble(_duration: number): void {
         // do nothing here intentionally. gamepads supporting rumbling do need to override this method
-    }
-
-    private stopMonitoring() {
-        NodeGamepad._usbMonitoringCounter--;
-        if (NodeGamepad._usbMonitoringCounter === 0) {
-            stopMonitoring();
-        }
-    }
-
-    private startMonitoring() {
-        if (NodeGamepad._usbMonitoringCounter === 0) {
-            startMonitoring();
-        }
-        NodeGamepad._usbMonitoringCounter++;
     }
 
     private logDebug(toLog: string) {
@@ -88,7 +50,43 @@ export class NodeGamepad extends EventEmitter {
         }
     }
 
-    private stopConnectionRetry(): void {
+    private connect(): void {
+        if (this._stopped) {
+            return;
+        }
+
+        let deviceList = devices(this.config.vendorID, this.config.productID);
+        if (this.config.serialNumber) {
+            deviceList = deviceList.filter((d) => d.serialNumber === this.config.serialNumber);
+        }
+
+        if (deviceList.length < 1) {
+            this.logDebug('Device not found, trying again later');
+            this._connectRetryTimeout = setTimeout(() => this.connect(), this._connectionRetryTimeoutInMs);
+            return;
+        }
+
+        const deviceToConnectTo = deviceList[0];
+
+        if (deviceToConnectTo?.path === undefined) {
+            this.logDebug('Failed to connect. Checking again later.');
+            this._connectRetryTimeout = setTimeout(() => this.connect(), this._connectionRetryTimeoutInMs);
+        }
+
+        this.logDebug(`connecting to:${JSON.stringify(deviceToConnectTo)}`);
+        this._usb = new HID(deviceToConnectTo.path!);
+        this.log(`connected`);
+        this.emit('connected');
+        this._connectRetryTimeout = undefined;
+        this._usb.on('data', (data: number[]) => this.onControllerFrame(data));
+        this._usb.on('error', (error) => {
+            this.log(`Error occurred:${JSON.stringify(error)}`);
+            this.disconnect();
+            this.connect();
+        });
+    }
+
+    private stopConnectionOProcess(): void {
         if (this._connectRetryTimeout) {
             clearTimeout(this._connectRetryTimeout);
             this._connectRetryTimeout = undefined;
@@ -99,33 +97,6 @@ export class NodeGamepad extends EventEmitter {
         process.on('SIGINT', () => this.stop());
         process.on('exit', () => this.stop());
         process.on('uncaughtException', () => this.stop());
-    }
-
-    private connect(device: Device): void {
-        if (this._usb) {
-            return;
-        }
-        this.log(`Device connected:${JSON.stringify(device)}`);
-        const matchingDevices = devices(device.vendorId, device.productId);
-        this.logDebug(`Found devices:${JSON.stringify(matchingDevices)}`);
-        const deviceToConnect = matchingDevices.find((d) => {
-            return device.serialNumber === undefined || device.serialNumber === d.serialNumber;
-        });
-        if (deviceToConnect?.path === undefined) {
-            this.log('Failed to connect. Checking again in 100 ms.');
-            this._connectRetryTimeout = setTimeout(() => this.connect(device), 100);
-        } else {
-            this.logDebug(`connecting to:${JSON.stringify(deviceToConnect)}`);
-            this._usb = new HID(deviceToConnect.path);
-            this.logDebug(`connected`);
-            this.emit('connected');
-            this._connectRetryTimeout = undefined;
-            this._usb.on('data', (data: number[]) => this.onControllerFrame(data));
-            this._usb.on('error', (error) => {
-                this.log(`Error occurred:${JSON.stringify(error)}`);
-                this.disconnect();
-            });
-        }
     }
 
     private disconnect() {
@@ -142,22 +113,6 @@ export class NodeGamepad extends EventEmitter {
             productID: spec.productID,
             serialNumber: spec.serialNumber,
         };
-    }
-
-    private connectIfMatching(device: Device): void {
-        if (this.deviceIsMatch(device)) {
-            this.connect(device);
-        }
-    }
-
-    private deviceIsMatch(device: Device): boolean {
-        let match = true;
-        if (this.config.serialNumber) {
-            match = match && this.config.serialNumber === device.serialNumber;
-        }
-        match = match && this.config.productID === device.productId;
-        match = match && this.config.vendorID === device.vendorId;
-        return match;
     }
 
     private onControllerFrame(data: number[]): void {
