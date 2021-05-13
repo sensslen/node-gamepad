@@ -1,5 +1,6 @@
+import { HID, devices } from 'node-hid';
+
 import { EventEmitter } from 'events';
-import { devices, HID } from 'node-hid';
 import { IConfig } from './IConfig';
 import { IDeviceSpec } from './IDeviceSpec';
 import { ILogger } from './ILogger';
@@ -20,13 +21,13 @@ export class NodeGamepad extends EventEmitter {
         super();
     }
 
-    public start() {
+    public start(): void {
         this.log(`Starting connection procedure to device:${JSON.stringify(this.toIDeviceSpec(this.config))}`);
         this.registerStopProgramStopEvent();
         this.connect();
     }
 
-    public stop() {
+    public stop(): void {
         if (!this._stopped) {
             this.stopConnectionOProcess();
             this.disconnect();
@@ -39,14 +40,14 @@ export class NodeGamepad extends EventEmitter {
     }
 
     private logDebug(toLog: string) {
-        if (this.logger?.Debug) {
-            this.logger.Debug(`NodeGamepad (Debug):${toLog}`);
+        if (this.logger?.debug) {
+            this.logger.debug(`NodeGamepad (Debug):${toLog}`);
         }
     }
 
     private log(toLog: string) {
         if (this.logger) {
-            this.logger.Info(`NodeGamepad:${toLog}`);
+            this.logger.info(`NodeGamepad:${toLog}`);
         }
     }
 
@@ -71,11 +72,12 @@ export class NodeGamepad extends EventEmitter {
         if (deviceToConnectTo?.path === undefined) {
             this.logDebug('Failed to connect. Checking again later.');
             this._connectRetryTimeout = setTimeout(() => this.connect(), this._connectionRetryTimeoutInMs);
+            return;
         }
 
         this.logDebug(`connecting to:${JSON.stringify(deviceToConnectTo)}`);
-        this._usb = new HID(deviceToConnectTo.path!);
-        this.log(`connected`);
+        this._usb = new HID(deviceToConnectTo.path);
+        this.log('connected');
         this.emit('connected');
         this._connectRetryTimeout = undefined;
         this._usb.on('data', (data: number[]) => this.onControllerFrame(data));
@@ -178,7 +180,7 @@ export class NodeGamepad extends EventEmitter {
     }
 
     private getStateName(states: { value: number; state: string }[], value: number): string {
-        for (let state of states) {
+        for (const state of states) {
             if (state.value === value) {
                 return state.state;
             }
