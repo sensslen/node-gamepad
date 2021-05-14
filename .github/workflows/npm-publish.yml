@@ -1,0 +1,26 @@
+name: npm-publish
+on:
+    push:
+        branches:
+            - master
+            - develop
+jobs:
+    npm-publish:
+        name: npm-publish
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0 # get full History to make sure tags are included an thus git-describe works
+            - uses: actions/setup-node@v2
+              with:
+                  node-version: '14'
+            - run: npm install
+            - run: npm run setuppublish
+            - name: Publish prerelease
+              uses: JS-DevTools/npm-publish@v1
+              with:
+                  token: ${{ secrets.NPM_AUTH_TOKEN }}
+                  package: dist/package.json
+                  tag: next
