@@ -29,8 +29,10 @@ export class NodeGamepad extends EventEmitter {
 
     public stop(): void {
         if (!this._stopped) {
+            this.log('stopping');
             this.stopConnectionProcess();
             this.disconnect();
+            this.log('stopped');
             this._stopped = true;
         }
     }
