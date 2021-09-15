@@ -29,7 +29,7 @@ export class NodeGamepad extends EventEmitter {
 
     public stop(): void {
         if (!this._stopped) {
-            this.stopConnectionOProcess();
+            this.stopConnectionProcess();
             this.disconnect();
             this._stopped = true;
         }
@@ -76,19 +76,29 @@ export class NodeGamepad extends EventEmitter {
         }
 
         this.logDebug(`connecting to:${JSON.stringify(deviceToConnectTo)}`);
-        this._usb = new HID(deviceToConnectTo.path);
-        this.log('connected');
-        this.emit('connected');
-        this._connectRetryTimeout = undefined;
-        this._usb.on('data', (data: number[]) => this.onControllerFrame(data));
-        this._usb.on('error', (error) => {
-            this.log(`Error occurred:${JSON.stringify(error)}`);
-            this.disconnect();
-            this.connect();
-        });
+        try {
+            this._usb = new HID(deviceToConnectTo.path);
+            this.log('connected');
+            this.emit('connected');
+            this._connectRetryTimeout = undefined;
+            this._usb.on('data', (data: number[]) => this.onControllerFrame(data));
+            this._usb.on('error', (error) => {
+                this.log(`Error occurred:${JSON.stringify(error)}`);
+                setTimeout(() => {
+                    this.log('reconnecting');
+                    this.disconnect();
+                    this.connect();
+                }, 0);
+            });
+        } catch (error) {
+            const typedError = error as Error;
+            this.log(`Connecting failed: ${typedError.message}`);
+            this.log('trying again later.');
+            this._connectRetryTimeout = setTimeout(() => this.connect(), this._connectionRetryTimeoutInMs);
+        }
     }
 
-    private stopConnectionOProcess(): void {
+    private stopConnectionProcess(): void {
         if (this._connectRetryTimeout) {
             clearTimeout(this._connectRetryTimeout);
             this._connectRetryTimeout = undefined;
