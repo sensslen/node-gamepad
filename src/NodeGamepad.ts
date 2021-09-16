@@ -25,14 +25,15 @@ export class NodeGamepad extends EventEmitter {
         this.log(`Starting connection procedure to device:${JSON.stringify(this.toIDeviceSpec(this.config))}`);
         this.registerStopProgramStopEvent();
         this.connect();
+
+        // on process exit, disconnect from any devices we may be connected to. and also stop any connection procedure
+        process.on('exit', () => this.stop());
     }
 
     public stop(): void {
         if (!this._stopped) {
-            this.log('stopping');
             this.stopConnectionProcess();
             this.disconnect();
-            this.log('stopped');
             this._stopped = true;
         }
     }
