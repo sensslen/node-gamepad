@@ -23,11 +23,8 @@ export class NodeGamepad extends EventEmitter {
 
     public start(): void {
         this.log(`Starting connection procedure to device:${JSON.stringify(this.toIDeviceSpec(this.config))}`);
-        this.registerStopProgramStopEvent();
+        this.registerProgramExitEvents();
         this.connect();
-
-        // on process exit, disconnect from any devices we may be connected to. and also stop any connection procedure
-        process.on('exit', () => this.stop());
     }
 
     public stop(): void {
@@ -108,7 +105,7 @@ export class NodeGamepad extends EventEmitter {
         }
     }
 
-    private registerStopProgramStopEvent() {
+    private registerProgramExitEvents() {
         process.on('SIGINT', () => this.stop());
         process.on('exit', () => this.stop());
         process.on('uncaughtException', () => this.stop());
