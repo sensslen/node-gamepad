@@ -8,7 +8,7 @@ import { JoyStickValue } from './JoyStickValue';
 import { evaluate } from 'mathjs';
 
 export class NodeGamepad extends EventEmitter {
-    protected _usb?: HID;
+    protected _usb?: HID = undefined;
     private _stopped = false;
     private _joystickStates: { [key: string]: JoyStickValue } = {};
     private _buttonStates: { [key: string]: boolean } = {};
@@ -106,9 +106,7 @@ export class NodeGamepad extends EventEmitter {
     }
 
     private registerProgramExitEvents() {
-        process.on('SIGINT', () => this.stop());
         process.on('exit', () => this.stop());
-        process.on('uncaughtException', () => this.stop());
     }
 
     private disconnect() {
