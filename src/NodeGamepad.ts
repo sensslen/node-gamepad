@@ -78,6 +78,7 @@ export class NodeGamepad extends EventEmitter {
         this.logDebug(`connecting to:${JSON.stringify(deviceToConnectTo)}`);
         try {
             this._usb = new HID(deviceToConnectTo.path);
+            this._usb.setNonBlocking(true);
             this.log('connected');
             this.emit('connected');
             this._connectRetryTimeout = undefined;
