@@ -28,11 +28,7 @@ export class NodeGamepad extends EventEmitter {
     }
 
     public stop(): void {
-        if (!this._stopped) {
-            this.stopConnectionProcess();
-            this.disconnect();
-            this._stopped = true;
-        }
+        this.internalStop(true);
     }
 
     public rumble(_duration: number): void {
@@ -86,7 +82,7 @@ export class NodeGamepad extends EventEmitter {
                 this.log(`Error occurred:${JSON.stringify(error)}`);
                 setTimeout(() => {
                     this.log('reconnecting');
-                    this.disconnect();
+                    this.disconnect(true);
                     this.connect();
                 }, 0);
             });
@@ -106,12 +102,14 @@ export class NodeGamepad extends EventEmitter {
     }
 
     private registerProgramExitEvents() {
-        process.on('exit', () => this.stop());
+        process.on('exit', () => this.internalStop(false));
     }
 
-    private disconnect() {
+    private disconnect(shouldEmit: boolean) {
         if (this._usb) {
-            this.emit('disconnected');
+            if (shouldEmit) {
+                this.emit('disconnected');
+            }
             this._usb.close();
             this._usb = undefined;
         }
@@ -194,5 +192,13 @@ export class NodeGamepad extends EventEmitter {
             }
         }
         return `unknown state:${value}`;
+    }
+
+    private internalStop(shouldEmit = false) {
+        if (!this._stopped) {
+            this.stopConnectionProcess();
+            this.disconnect(shouldEmit);
+            this._stopped = true;
+        }
     }
 }
