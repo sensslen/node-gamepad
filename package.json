@@ -21,7 +21,7 @@
     "scripts": {
         "build": "npm run lint && tsc",
         "postbuild": "shx cp -r src/controllers/ dist/",
-        "clean": "shx rm -r dist",
+        "clean": "shx rm -rf dist",
         "postinstall": "sort-package-json",
         "lint": "eslint --ext .ts src",
         "presetuppublish": "npm run clean && npm run build && sort-package-json",
