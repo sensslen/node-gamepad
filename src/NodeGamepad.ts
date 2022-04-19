@@ -1,7 +1,7 @@
 import { HID, devices } from 'node-hid';
+import { IButtonConfig, IConfig, IJoyStickConfig, IScaleConfig, IStateMappingConfig, IStatusConfig } from './IConfig';
 
 import { EventEmitter } from 'events';
-import { IConfig } from './IConfig';
 import { IDeviceSpec } from './IDeviceSpec';
 import { ILogger } from './ILogger';
 import { JoyStickValue } from './JoyStickValue';
@@ -9,32 +9,36 @@ import { evaluate } from 'mathjs';
 
 export class NodeGamepad extends EventEmitter {
     protected _usb?: HID = undefined;
-    private _stopped = false;
+    private _running = false;
     private _joystickStates: { [key: string]: JoyStickValue } = {};
     private _buttonStates: { [key: string]: boolean } = {};
     private _statusStates: { [key: string]: number } = {};
     private _scaleStates: { [key: string]: number } = {};
     private _connectRetryTimeout?: ReturnType<typeof setTimeout>;
-    private readonly _connectionRetryTimeoutInMs = 100;
+    private readonly _connectionRetryTimeoutInMs = 500;
 
     constructor(private config: IConfig, private logger?: ILogger) {
         super();
     }
 
     public start(): void {
+        if (this._running) {
+            return;
+        }
         this.log(`Starting connection procedure to device:${JSON.stringify(this.toIDeviceSpec(this.config))}`);
         this.registerProgramExitEvents();
+        this._running = true;
         this.connect();
     }
 
     public stop(): void {
-        this._stopped = true;
+        this._running = false;
         this.stopConnectionProcess();
-        this.stopUsbRead();
+        this.closeUsbDevice();
     }
 
-    public rumble(_duration: number): void {
-        // do nothing here intentionally. gamepads supporting rumbling do need to override this method
+    public rumble(_intensity: number, _duration: number): void {
+        // todo
     }
 
     private logDebug(toLog: string) {
@@ -50,7 +54,7 @@ export class NodeGamepad extends EventEmitter {
     }
 
     private connect(): void {
-        if (this._stopped) {
+        if (!this._running) {
             return;
         }
 
@@ -82,10 +86,10 @@ export class NodeGamepad extends EventEmitter {
             this._usb.on('data', (data: number[]) => this.onControllerFrame(data));
             this._usb.on('error', (error) => {
                 this.log(`Error occurred:${JSON.stringify(error)}`);
+                this.emit('disconnected');
+                this.closeUsbDevice();
                 setTimeout(() => {
                     this.log('reconnecting');
-                    this.emit('disconnected');
-                    this.stopUsbRead();
                     this.connect();
                 }, 0);
             });
@@ -93,6 +97,7 @@ export class NodeGamepad extends EventEmitter {
             const typedError = error as Error;
             this.log(`Connecting failed: ${typedError.message}`);
             this.log('trying again later.');
+            this.closeUsbDevice();
             this._connectRetryTimeout = setTimeout(() => this.connect(), this._connectionRetryTimeoutInMs);
         }
     }
@@ -111,7 +116,7 @@ export class NodeGamepad extends EventEmitter {
         });
     }
 
-    private stopUsbRead() {
+    private closeUsbDevice() {
         if (this._usb) {
             this._usb.close();
             this._usb = undefined;
@@ -131,64 +136,88 @@ export class NodeGamepad extends EventEmitter {
 
         this.processJoysticks(data);
         this.processButtons(data);
-        this.processStatus(data);
+        this.processStates(data);
         this.processScales(data);
     }
 
     private processJoysticks(data: number[]) {
         this.config.joysticks?.forEach((joystick) => {
-            const oldState = this._joystickStates[joystick.name];
-            const newState = {
-                x: data[joystick.x.pin],
-                y: data[joystick.y.pin],
-            };
-            if (oldState === undefined || oldState.x !== newState.x || oldState.y !== newState.y) {
-                this.emit(joystick.name + ':move', newState);
+            if (data.length > joystick.x.pin || data.length > joystick.y.pin) {
+                this.processJoystick(joystick, data);
             }
-            this._joystickStates[joystick.name] = newState;
         });
+    }
+
+    private processJoystick(joystick: IJoyStickConfig, data: number[]) {
+        const oldState = this._joystickStates[joystick.name];
+        const newState = {
+            x: data[joystick.x.pin],
+            y: data[joystick.y.pin],
+        };
+        if (oldState === undefined || oldState.x !== newState.x || oldState.y !== newState.y) {
+            this.emit(joystick.name + ':move', newState);
+        }
+        this._joystickStates[joystick.name] = newState;
     }
 
     private processButtons(data: number[]) {
         this.config.buttons?.forEach((button) => {
-            const oldState = this._buttonStates[button.name];
-            const newState: boolean = evaluate(button.value, { value: data[button.pin] });
-            if (oldState == undefined) {
-                if (newState) {
-                    this.emit(button.name + ':press');
-                }
-            } else if (oldState !== newState) {
-                const emitEvent = newState ? `${button.name}:press` : `${button.name}:release`;
-                this.emit(emitEvent);
+            if (data.length > button.pin) {
+                this.processButton(data, button);
             }
-
-            this._buttonStates[button.name] = newState;
         });
+    }
+
+    private processButton(data: number[], config: IButtonConfig) {
+        const oldState = this._buttonStates[config.name];
+        const newState: boolean = evaluate(config.value, { value: data[config.pin] });
+        if (oldState == undefined) {
+            if (newState) {
+                this.emit(config.name + ':press');
+            }
+        } else if (oldState !== newState) {
+            const emitEvent = newState ? `${config.name}:press` : `${config.name}:release`;
+            this.emit(emitEvent);
+        }
+
+        this._buttonStates[config.name] = newState;
     }
 
     private processScales(data: number[]) {
-        this.config.scale?.forEach((scale) => {
-            const oldState = this._scaleStates[scale.name];
-            const newState = data[scale.pin];
-            if (oldState !== newState) {
-                this.emit(scale.name + ':change', newState);
+        this.config.scales?.forEach((scale) => {
+            if (data.length > scale.pin) {
+                this.processScale(scale, data);
             }
-            this._scaleStates[scale.name] = newState;
         });
     }
 
-    private processStatus(data: number[]) {
+    private processScale(config: IScaleConfig, data: number[]) {
+        const oldState = this._scaleStates[config.name];
+        const newState = data[config.pin];
+        if (oldState !== newState) {
+            this.emit(config.name + ':change', newState);
+        }
+        this._scaleStates[config.name] = newState;
+    }
+
+    private processStates(data: number[]) {
         this.config.status?.forEach((status) => {
-            const oldState = this._statusStates[status.name];
-            const newState = data[status.pin];
-            if (oldState !== newState) {
-                this.emit(status.name + ':change', this.getStateName(status.states, newState));
+            if (data.length > status.pin) {
+                this.processState(status, data);
             }
-            this._statusStates[status.name] = newState;
         });
     }
 
-    private getStateName(states: { value: number; state: string }[], value: number): string {
+    private processState(config: IStatusConfig, data: number[]) {
+        const oldState = this._statusStates[config.name];
+        const newState = data[config.pin];
+        if (oldState !== newState) {
+            this.emit(config.name + ':change', this.getStateName(config.states, newState));
+        }
+        this._statusStates[config.name] = newState;
+    }
+
+    private getStateName(states: IStateMappingConfig[], value: number): string {
         for (const state of states) {
             if (state.value === value) {
                 return state.state;
