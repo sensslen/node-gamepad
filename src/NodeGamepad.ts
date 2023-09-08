@@ -17,7 +17,10 @@ export class NodeGamepad extends EventEmitter {
     private _connectRetryTimeout?: ReturnType<typeof setTimeout>;
     private readonly _connectionRetryTimeoutInMs = 500;
 
-    constructor(private config: IConfig, private logger?: ILogger) {
+    constructor(
+        private config: IConfig,
+        private logger?: ILogger
+    ) {
         super();
     }
 

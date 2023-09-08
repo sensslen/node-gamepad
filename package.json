@@ -24,6 +24,7 @@
         "clean": "shx rm -rf dist",
         "postinstall": "sort-package-json",
         "lint": "eslint --ext .ts src",
+        "lint-fix": "eslint --ext .ts --fix .",
         "presetuppublish": "npm run clean && npm run build && sort-package-json",
         "setuppublish": "node dist/SetupPackage.js",
         "pretest": "sort-package-json && npm run build",
