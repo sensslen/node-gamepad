@@ -1,59 +1,62 @@
 # node-gamepad [![CodeFactor](https://www.codefactor.io/repository/github/sensslen/node-gamepad/badge)](https://www.codefactor.io/repository/github/sensslen/node-gamepad)
 
-> node-gamepad is a package for node that allows you to effortlessly interface your node applications with a variety of gamepad controllers.
-> Please note that XBOX 360 Controllers (and all of their derivatives) are known to behave bad. Thus this library does not support these kinds of Controllers.
+`node-gamepad` is a Node.js package for interfacing your applications with a variety of gamepad controllers. It is written in TypeScript and provides type definitions for a better development experience.
+
+> **Note:** XBOX 360 Controllers (and all of their derivatives) are known to behave badly and are **not supported** by this library.
 
 ## Installation
 
-```js
+```sh
 npm install @sensslen/node-gamepad
 ```
 
 ### Supported Controllers
 
-1. snes/tomee
-1. snes/retrolink
-1. ps3/dualshock3
-1. ps4/dualshock4
-1. n64/retrolink
-1. logitech/rumblepad2
-1. logitech/dualaction
-1. logitech/gamepadf310
-1. logitech/gamepadf710
-1. microsoft/sidewinder-precision-2
+The following controllers are actively maintained and tested:
+
+- Logitech Rumblepad 2
+- Logitech Gamepad F310
+- Logitech Gamepad F710
+
+You can also create your own controller definitions by providing a custom configuration to the constructor. Contributions for additional controller support are welcome!
+
 
 ## How to Use
 
-Plug in a supported controller and run a variation of the code below (with an actual supported controller).
-Slternatively you can also run the code below and then plug in a supported controller.
+Plug in a supported controller and run a variation of the code below (with an actual supported controller). Alternatively, you can also run the code below and then plug in a supported controller.
 
-### Code Example
+### TypeScript Example
 
 ```ts
-import { NodeGamepad } from 'node-gamepad';
-import * as f310 from 'node-gamepad/controllers/logitech/gamepadf310';
+import { NodeGamepad } from '@sensslen/node-gamepad';
+import * as f310 from '@sensslen/node-gamepad/controllers/logitech/gamepadf310';
 
-let gamepad = new NodeGamepad(f310);
+const gamepad = new NodeGamepad(f310);
 
 gamepad.start();
 
-gamepad.on('connected', function () {
-    console.log('connected');
+gamepad.on('connected', () => {
+  console.log('connected');
 });
-gamepad.on('disconnected', function () {
-    console.log('disconnected');
-});
-
-gamepad.on('up:press', function () {
-    console.log('up');
-});
-gamepad.on('down:press', function () {
-    console.log('down');
+gamepad.on('disconnected', () => {
+  console.log('disconnected');
 });
 
-// dont forget to stop when you are finished: gamepad.stop()
-// the gamepad class also registers for app termination just in case
+gamepad.on('up:press', () => {
+  console.log('up');
+});
+gamepad.on('down:press', () => {
+  console.log('down');
+});
+
+// Don't forget to stop when you are finished:
+// gamepad.stop();
+// The gamepad class also registers for app termination just in case.
 ```
+
+
+> **Note:** Type definitions are included for all event handlers and configuration objects. JavaScript users also benefit from improved autocompletion and documentation in modern editors.
+
 
 ## Supported Events
 
@@ -74,19 +77,16 @@ A status value is read from a pin on the hardware and then can be mapped to a "s
 
 1. `{name}:change`
 
+
 ## Contributing Controllers
 
-Please feel free to provide your own custom controller
-configurations to the constructor. It would b highly appreciated if you make the configuration publically available by opening a pull request.
+
+You are welcome to provide your own custom controller configurations to the constructor. Contributions of new controller definitions are highly appreciated. Please consider making them publicly available by opening a pull request.
+
+---
+
+> **Note:** This project is written in [TypeScript](https://www.typescriptlang.org/), providing type definitions and improved editor support. It can be used from both TypeScript and JavaScript projects. Type definitions are included for all event handlers and configuration objects. JavaScript users also benefit from improved autocompletion and documentation in modern editors.
 
 ## License
 
-The MIT License (MIT)
-
-Copyright (c) 2021 Simon Ensslen and contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
