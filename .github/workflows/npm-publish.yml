@@ -26,12 +26,7 @@ jobs:
                   node-version: '24'
             - run: npm install
             - run: npm run setuppublish
-            - name: Publish release
-              uses: JS-DevTools/npm-publish@v4.1.1
-              with:
-                  token: ${{ secrets.NPM_AUTH_TOKEN }}
-                  package: dist/package.json
-                  tag: latest
+            - run: npm publish dist --tag latest
     npm-publish_prerelease:
         if: github.ref_type != 'tag'
         name: npm-publish-prerelease
