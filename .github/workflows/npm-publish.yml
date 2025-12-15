@@ -6,6 +6,11 @@ on:
             - develop
         tags:
             - '*'
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 jobs:
     npm-publish:
         if: github.ref_type == 'tag'
@@ -41,9 +46,4 @@ jobs:
                   node-version: '24'
             - run: npm install
             - run: npm run setuppublish
-            - name: Publish prerelease
-              uses: JS-DevTools/npm-publish@v4.1.1
-              with:
-                  token: ${{ secrets.NPM_AUTH_TOKEN }}
-                  package: dist/package.json
-                  tag: next
+            - run: npm publish dist --tag next
