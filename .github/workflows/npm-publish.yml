@@ -24,9 +24,13 @@ jobs:
             - uses: actions/setup-node@v6
               with:
                   node-version: '24'
+                  registry-url: 'https://registry.npmjs.org'
             - run: npm install
             - run: npm run setuppublish
-            - run: npm publish dist --tag latest
+            - run: |
+                pushd dist
+                npm publish --tag latest
+                popd
     npm-publish_prerelease:
         if: github.ref_type != 'tag'
         name: npm-publish-prerelease
@@ -39,6 +43,10 @@ jobs:
             - uses: actions/setup-node@v6
               with:
                   node-version: '24'
+                  registry-url: 'https://registry.npmjs.org'
             - run: npm install
             - run: npm run setuppublish
-            - run: npm publish dist --tag next
+            - run: |
+                pushd dist
+                npm publish --tag next
+                popd
