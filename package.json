@@ -35,7 +35,7 @@
         "node-hid": "^3.1.0"
     },
     "devDependencies": {
-        "@types/node": "^24",
+        "@types/node": "^25",
         "@types/semver": "^7.5.1",
         "@types/ts-nameof": "^4.2.3",
         "@typescript-eslint/eslint-plugin": "^8",
