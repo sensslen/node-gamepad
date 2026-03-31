@@ -49,6 +49,6 @@
         "shx": "^0.4.0",
         "simple-git": "^3.19.1",
         "sort-package-json": "^3",
-        "typescript": "^5.2.2"
+        "typescript": "^6.0.0"
     }
 }
