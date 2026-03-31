@@ -8,7 +8,7 @@ import { JoyStickValue } from './JoyStickValue';
 import { evaluate } from 'mathjs';
 
 export class NodeGamepad extends EventEmitter {
-    protected _usb?: HID = undefined;
+    private _usb?: HID = undefined;
     private _running = false;
     private _joystickStates: { [key: string]: JoyStickValue } = {};
     private _buttonStates: { [key: string]: boolean } = {};
