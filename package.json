@@ -48,7 +48,7 @@
         "shx": "^0.4.0",
         "simple-git": "^3.19.1",
         "sort-package-json": "^4.0.0",
-        "typescript": "^6",
+        "typescript": "^7.0.0",
         "typescript-eslint": "^8"
     }
 }
