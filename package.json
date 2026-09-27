@@ -46,7 +46,7 @@
         "prettier": "^3.0.3",
         "semver": "^7.5.4",
         "shx": "^0.4.0",
-        "simple-git": "^3.19.1",
+        "simple-git": "^4.0.0",
         "sort-package-json": "^4.0.0",
         "typescript": "^6",
         "typescript-eslint": "^8"
