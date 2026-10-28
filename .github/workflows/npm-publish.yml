@@ -23,7 +23,7 @@ jobs:
                   fetch-depth: 0 # get full History to make sure tags are included an thus git-describe works
             - uses: actions/setup-node@v7
               with:
-                  node-version: '24'
+                  node-version: '26'
                   registry-url: 'https://registry.npmjs.org'
             - run: npm install
             - run: npm run setuppublish
@@ -42,7 +42,7 @@ jobs:
                   fetch-depth: 0 # get full History to make sure tags are included an thus git-describe works
             - uses: actions/setup-node@v7
               with:
-                  node-version: '24'
+                  node-version: '26'
                   registry-url: 'https://registry.npmjs.org'
             - run: npm install
             - run: npm run setuppublish

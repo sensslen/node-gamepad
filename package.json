@@ -36,7 +36,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^10",
-        "@types/node": "^25",
+        "@types/node": "^26.0.0",
         "@types/semver": "^7.5.1",
         "@types/ts-nameof": "^4.2.3",
         "eslint": "^10",
